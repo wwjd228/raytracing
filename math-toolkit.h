@@ -1,9 +1,22 @@
 #ifndef __RAY_MATH_TOOLKIT_H
 #define __RAY_MATH_TOOLKIT_H
+#define subtract_vector(a, b, out) ( out[0] = a[0] - b[0], \
+                                     out[1] = a[1] - b[1], \
+			             out[2] = a[2] - b[2] )
+#define add_vector(a, b, out) ( out[0] = a[0] + b[0], \
+                                out[1] = a[1] + b[1], \
+				out[2] = a[2] + b[2] )
+#define multiply_vectors(a, b, out) ( out[0] = a[0] * b[0], \
+                                      out[1] = a[1] * b[1], \
+				      out[2] = a[2] * b[2] )
+#define multiply_vector(a, b, out) ( out[0] = a[0] * b, \
+                                      out[1] = a[1] * b, \
+				      out[2] = a[2] * b )
 
 #include <math.h>
 #include <stdio.h>
 #include <assert.h>
+#include <immintrin.h>
 
 static inline
 void normalize(double *v)
@@ -20,50 +33,6 @@ static inline
 double length(const double *v)
 {
     return sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-}
-
-static inline
-void add_vector(const double *a, const double *b, double *out)
-{
-    /* unrolling this
-    for (int i = 0; i < 3; i++)
-        out[i] = a[i] + b[i];*/
-    out[0] = a[0] + b[0];
-    out[1] = a[1] + b[1];
-    out[2] = a[2] + b[2];
-}
-
-static inline
-void subtract_vector(const double *a, const double *b, double *out)
-{
-    /* unrolling this
-    for (int i = 0; i < 3; i++)
-        out[i] = a[i] - b[i];*/
-    out[0] = a[0] - b[0];
-    out[1] = a[1] - b[1];
-    out[2] = a[2] - b[2];
-}
-
-static inline
-void multiply_vectors(const double *a, const double *b, double *out)
-{
-    /* unrolling this
-    for (int i = 0; i < 3; i++)
-        out[i] = a[i] * b[i];*/
-    out[0] = a[0] * b[0];
-    out[1] = a[1] * b[1];
-    out[2] = a[2] * b[2];
-}
-
-static inline
-void multiply_vector(const double *a, double b, double *out)
-{
-    /* unrolling this
-    for (int i = 0; i < 3; i++)
-        out[i] = a[i] * b;*/
-    out[0] = a[0] * b;
-    out[1] = a[1] * b;
-    out[2] = a[2] * b;
 }
 
 static inline
