@@ -4,9 +4,9 @@ all: $(EXEC)
 
 CC ?= gcc
 CFLAGS = \
-	-std=gnu99 -Wall -O0 -mavx2 -g
+	-std=gnu99 -Wall -O0 -mavx2 -pthread -g
 LDFLAGS = \
-	-lm
+	-lm -pthread
 
 ifeq ($(strip $(PROFILE)),1)
 PROF_FLAGS = -pg

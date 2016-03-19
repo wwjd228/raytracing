@@ -5,6 +5,7 @@
 #include "primitives.h"
 #include "raytracing.h"
 #include "idx_stack.h"
+#include <pthread.h>
 
 #define MAX_REFLECTION_BOUNCES	3
 #define MAX_DISTANCE 1000000000000.0
@@ -17,6 +18,9 @@
 /* @param t t distance
  * @return 1 means hit, otherwise 0
  */
+
+extern pthread_mutex_t mutexsum;
+
 static int raySphereIntersection(const point3 ray_e,
                                  const point3 ray_d,
                                  const sphere *sph,
@@ -453,22 +457,30 @@ static unsigned int ray_color(const point3 e, double t,
 }
 
 /* @param background_color this is not ambient light */
-void raytracing(uint8_t *pixels, color background_color,
-                rectangular_node rectangulars, sphere_node spheres,
-                light_node lights, const viewpoint *view,
-                int width, int height)
+void raytracing(void *pArg)
 {
+    thread_arg *arg = (thread_arg *)pArg;
     point3 u, v, w, d;
     color object_color = { 0.0, 0.0, 0.0 };
+    int wstart = arg ->wstart, hstart = arg ->hstart, height = arg ->height, width = arg ->width;
+    uint8_t *pixels = arg ->pixels;
+    color background_color;
+    background_color[0] = arg ->background_color[0];
+    background_color[1] = arg ->background_color[1];
+    background_color[2] = arg ->background_color[2];
+    rectangular_node rectangulars = arg ->rectangulars;
+    sphere_node spheres = arg ->spheres;
+    light_node lights = arg ->lights;
+    const viewpoint *view = arg ->view;
 
     /* calculate u, v, w */
-    calculateBasisVectors(u, v, w, view);
+    calculateBasisVectors(u, v, w, arg ->view);
 
     idx_stack stk;
 
     int factor = sqrt(SAMPLES);
-    for (int j = 0; j < height; j++) {
-        for (int i = 0; i < width; i++) {
+    for (int j = hstart; j < height; j++) {
+        for (int i = wstart; i < width; i++) {
             double r = 0, g = 0, b = 0;
             /* MSAA */
             for (int s = 0; s < SAMPLES; s++) {
@@ -477,7 +489,7 @@ void raytracing(uint8_t *pixels, color background_color,
                                 i * factor + s / factor,
                                 j * factor + s % factor,
                                 view,
-                                width * factor, height * factor);
+                                512 * factor, 512 * factor);
                 if (ray_color(view->vrp, 0.0, d, &stk, rectangulars, spheres,
                               lights, object_color,
                               MAX_REFLECTION_BOUNCES)) {
@@ -489,10 +501,34 @@ void raytracing(uint8_t *pixels, color background_color,
                     g += background_color[1];
                     b += background_color[2];
                 }
-                pixels[((i + (j * width)) * 3) + 0] = r * 255 / SAMPLES;
-                pixels[((i + (j * width)) * 3) + 1] = g * 255 / SAMPLES;
-                pixels[((i + (j * width)) * 3) + 2] = b * 255 / SAMPLES;
+                pixels[((i + (j * 512)) * 3) + 0] = r * 255 / SAMPLES;
+                pixels[((i + (j * 512)) * 3) + 1] = g * 255 / SAMPLES;
+                pixels[((i + (j * 512)) * 3) + 2] = b * 255 / SAMPLES;
             }
         }
     }
+
+    pthread_exit((void *) 0);
+}
+
+thread_arg *setThread_arg(uint8_t *pixels, color background_color,
+                          rectangular_node rectangulars, sphere_node spheres,
+                          light_node lights, const viewpoint *view,
+                          int width, int height, int wstart, int hstart)
+{
+    thread_arg *arg = malloc(sizeof(struct __THREAD_ARG));
+    arg ->pixels = pixels;
+    arg ->background_color[0] = background_color[0];
+    arg ->background_color[1] = background_color[1];
+    arg ->background_color[2] = background_color[2];
+    arg ->rectangulars = rectangulars;
+    arg ->spheres = spheres;
+    arg ->lights = lights;
+    arg ->view = view;
+    arg ->width = width;
+    arg ->height = height;
+    arg ->wstart = wstart;
+    arg ->hstart = hstart;
+
+    return arg;
 }

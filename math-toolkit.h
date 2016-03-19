@@ -10,8 +10,8 @@
                                       out[1] = a[1] * b[1], \
 				      out[2] = a[2] * b[2] )
 #define multiply_vector(a, b, out) ( out[0] = a[0] * b, \
-                                      out[1] = a[1] * b, \
-				      out[2] = a[2] * b )
+                                     out[1] = a[1] * b, \
+				     out[2] = a[2] * b )
 
 #include <math.h>
 #include <stdio.h>
